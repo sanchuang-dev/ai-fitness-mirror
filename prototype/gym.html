@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#080a09">
+<title>Northline · Smart Fitness Mirror 健身房版</title>
+<link rel="stylesheet" href="assets/mirror.css">
+<style>
+  /* ---------- gym scene (钢铁节拍 · 石墨黑 / 薄荷绿) ---------- */
+
+  .g-standby { position: relative; height: 100%; overflow: hidden; cursor: pointer; }
+  .g-standby__bg { position: absolute; inset: 0; }
+  .g-standby__bg img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; filter: grayscale(.5) brightness(.4) contrast(1.15); }
+  .g-standby__scrim {
+    position: absolute; inset: 0;
+    background:
+      linear-gradient(100deg, rgba(6,8,7,.95) 0%, rgba(6,8,7,.74) 44%, rgba(6,8,7,.28) 100%),
+      linear-gradient(180deg, rgba(6,8,7,.7) 0%, transparent 30%, rgba(6,8,7,.85) 100%);
+  }
+  .g-standby__inner { position: relative; height: 100%; padding: 84px 92px 92px; display: flex; flex-direction: column; justify-content: space-between; }
+
+  .g-lockup { display: inline-flex; align-items: center; gap: 20px; }
+  .g-lockup__mark {
+    width: 44px; height: 44px; border: 2px solid var(--accent); border-radius: 2px;
+    display: grid; place-items: center; transform: rotate(45deg);
+  }
+  .g-lockup__mark span { width: 14px; height: 14px; background: var(--accent); display: block; }
+  .g-lockup__text { display: grid; gap: 4px; }
+  .g-lockup__name { font-family: var(--font-display); font-size: 30px; font-weight: 700; letter-spacing: .2em; line-height: 1; }
+  .g-lockup__sub { font-size: 13px; letter-spacing: .34em; color: var(--muted); }
+
+  .g-standby__top { display: flex; justify-content: space-between; align-items: flex-start; }
+  .g-status { display: inline-flex; align-items: center; gap: 12px; font-size: 18px; letter-spacing: .24em; color: var(--muted); }
+  .g-status i { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); display: block; animation: livePulse 2.4s ease-in-out infinite; }
+  @keyframes livePulse { 0%,100% { opacity: .35; } 50% { opacity: 1; } }
+
+  .g-standby__mid { display: grid; gap: 26px; }
+  .g-clock { font-family: var(--font-num); font-size: 300px; line-height: .86; letter-spacing: -.02em; color: #f6fbf8; font-weight: 500; font-variant-numeric: tabular-nums; }
+  .g-date { display: flex; align-items: center; gap: 22px; font-size: 24px; letter-spacing: .2em; color: var(--muted); }
+  .g-date::before { content: ""; width: 64px; height: 2px; background: var(--accent); }
+  .g-standby__cta { display: flex; align-items: flex-end; justify-content: space-between; gap: 40px; }
+  .g-standby__hint { display: grid; gap: 14px; }
+  .g-standby__hint h1 { margin: 0; font-family: var(--font-display); font-size: 66px; font-weight: 600; line-height: 1.3; letter-spacing: .01em; }
+  .g-standby__hint p { margin: 0; font-size: 24px; color: var(--muted); letter-spacing: .1em; }
+  .g-pending {
+    margin-top: 18px; width: 100%; display: flex; align-items: center; gap: 22px;
+    padding: 22px 26px; border: 1px solid var(--line-strong); border-radius: var(--r-card);
+    background: rgba(127,227,180,.05); color: var(--text); text-align: left; cursor: pointer;
+    transition: background-color .18s, border-color .18s;
+  }
+  .g-pending:hover { background: var(--accent-soft); border-color: var(--accent); }
+  .g-pending > span:first-child { width: 52px; height: 52px; border: 1px solid var(--line-strong); display: grid; place-items: center; color: var(--accent); flex: none; border-radius: 2px; }
+  .g-pending > span:nth-child(2) { flex: 1 1 auto; display: grid; gap: 4px; }
+  .g-pending b { font-family: var(--font-display); font-size: 27px; font-weight: 600; letter-spacing: .04em; }
+  .g-pending em { font-style: normal; font-size: 18px; color: var(--faint); letter-spacing: .06em; }
+  .g-pending > .od-icon { color: var(--faint); flex: none; }
+
+  .g-standby[data-state="dormant"] .g-standby__cta .btn { display: none; }
+  .g-standby[data-state="awake"] .g-standby__idle { display: none; }
+  .g-standby__idle { display: inline-flex; align-items: center; gap: 12px; font-size: 19px; letter-spacing: .26em; color: var(--faint); }
+  .g-standby:focus-visible { outline: none; box-shadow: inset 0 0 0 3px var(--focus); }
+
+  /* ---------- chrome ---------- */
+
+  .g-screen { height: 100%; display: flex; flex-direction: column; padding: 76px 84px 70px; }
+  .g-topbar { display: flex; align-items: center; justify-content: space-between; gap: 30px; }
+  .g-topbar__right { display: flex; align-items: center; gap: 28px; }
+  .g-topbar__time { font-family: var(--font-num); font-size: 26px; color: var(--muted); font-variant-numeric: tabular-nums; letter-spacing: .04em; }
+  .g-topbar .btn--quiet { color: var(--faint); }
+  .g-topbar .btn--quiet:hover { color: var(--text); }
+
+  .g-hero-head { margin-top: 62px; }
+  .g-hero-head .eyebrow { color: var(--accent); margin-bottom: 22px; font-size: 18px; letter-spacing: .3em; }
+  .g-hero-head h1 { margin: 0; font-family: var(--font-display); font-size: 76px; font-weight: 600; line-height: 1.3; letter-spacing: .005em; }
+  .g-hero-head h1 em { font-style: normal; color: var(--accent); }
+
+  .g-feature {
+    position: relative; margin-top: 40px; height: 470px; overflow: hidden;
+    border: 1px solid var(--line-strong); border-radius: var(--r-card);
+    display: block; width: 100%; text-align: left; padding: 0; cursor: pointer; background: var(--bg-2);
+    transition: transform .18s cubic-bezier(.4,0,.2,1), border-color .18s;
+  }
+  .g-feature:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .g-feature img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; filter: brightness(.62) saturate(.8); }
+  .g-feature__scrim { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(6,9,7,.92) 0%, rgba(6,9,7,.55) 58%, rgba(6,9,7,.12) 100%); }
+  .g-feature__body { position: relative; height: 100%; padding: 40px 44px; display: flex; flex-direction: column; justify-content: space-between; }
+  .g-feature__tag { display: inline-flex; align-items: center; gap: 10px; align-self: flex-start; padding: 9px 18px; border: 1px solid var(--accent); color: var(--accent); font-size: 16px; letter-spacing: .24em; border-radius: 2px; }
+  .g-feature__title { margin: 0; font-family: var(--font-display); font-size: 66px; font-weight: 600; line-height: 1.3; }
+  .g-feature__meta { margin-top: 16px; display: flex; gap: 28px; font-size: 22px; color: rgba(241,246,243,.74); font-variant-numeric: tabular-nums; }
+  .g-feature__go { display: inline-flex; align-items: center; gap: 14px; font-size: 22px; letter-spacing: .16em; color: var(--accent); }
+
+  .g-section { margin-top: 44px; display: flex; align-items: baseline; justify-content: space-between; }
+  .g-section h2 { margin: 0; font-family: var(--font-display); font-size: 34px; font-weight: 600; letter-spacing: .06em; }
+  .g-section__more { display: inline-flex; align-items: center; gap: 8px; border: 0; background: none; color: var(--muted); font-size: 21px; letter-spacing: .12em; cursor: pointer; padding: 12px 0 12px 20px; }
+  .g-section__more:hover { color: var(--accent); }
+
+  .g-tiles { margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .g-tile {
+    position: relative; height: 245px; overflow: hidden; border: 1px solid var(--line);
+    border-radius: var(--r-card); background: var(--surface); cursor: pointer;
+    padding: 0; text-align: left; display: block; width: 100%;
+    transition: border-color .18s, transform .18s;
+  }
+  .g-tile:hover { border-color: var(--line-strong); transform: translateY(-2px); }
+  .g-tile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .42; filter: grayscale(.25); }
+  .g-tile__scrim { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(8,10,9,.15) 0%, rgba(8,10,9,.88) 100%); }
+  .g-tile__body { position: relative; height: 100%; padding: 26px 28px; display: flex; flex-direction: column; justify-content: flex-end; gap: 6px; }
+  .g-tile__idx { position: absolute; top: 22px; left: 26px; font-family: var(--font-num); font-size: 17px; letter-spacing: .16em; color: var(--accent); }
+  .g-tile__name { font-family: var(--font-display); font-size: 34px; font-weight: 600; letter-spacing: .04em; }
+  .g-tile__meta { font-size: 18px; color: var(--muted); letter-spacing: .1em; }
+
+  .g-allrow {
+    margin-top: 18px; display: flex; align-items: center; justify-content: space-between;
+    gap: 24px; width: 100%; padding: 28px 30px; cursor: pointer;
+    border: 1px solid var(--line); border-radius: var(--r-card); background: transparent;
+    color: var(--text); transition: background-color .18s, border-color .18s;
+  }
+  .g-allrow:hover { background: var(--accent-soft); border-color: var(--line-strong); }
+  .g-allrow__left { display: flex; align-items: center; gap: 24px; }
+  .g-allrow__left span:first-child { font-family: var(--font-display); font-size: 32px; font-weight: 600; letter-spacing: .05em; }
+  .g-allrow__left span:last-child { font-size: 19px; color: var(--faint); letter-spacing: .14em; }
+
+  .g-foot { margin-top: auto; padding-top: 26px; display: flex; justify-content: space-between; align-items: center; font-size: 18px; letter-spacing: .18em; color: var(--faint); }
+  .g-foot button { border: 0; background: none; color: var(--faint); cursor: pointer; font-size: 18px; letter-spacing: .18em; padding: 16px 0 16px 20px; }
+  .g-foot button:hover { color: var(--muted); }
+
+  /* ---------- list ---------- */
+
+  .g-listhead { margin-top: 54px; display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
+  .g-listhead h1 { margin: 0; font-family: var(--font-display); font-size: 76px; font-weight: 600; line-height: 1.3; }
+  .g-listhead .caption { letter-spacing: .2em; }
+  .g-filters { margin-top: 30px; display: flex; gap: 12px; flex-wrap: wrap; }
+  .g-filters .chip { min-height: 64px; padding: 0 32px; font-size: 24px; border-radius: 2px; letter-spacing: .1em; }
+
+  .g-grid { margin-top: 32px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding-bottom: 40px; }
+  .g-card {
+    display: grid; grid-template-rows: auto 1fr; border: 1px solid var(--line);
+    border-radius: var(--r-card); overflow: hidden; background: var(--surface);
+    text-align: left; cursor: pointer; padding: 0; transition: border-color .18s, transform .18s;
+  }
+  .g-card:hover { border-color: var(--line-strong); transform: translateY(-2px); }
+  .g-card__media { position: relative; display: block; aspect-ratio: 1 / 1; overflow: hidden; }
+  .g-card__media img { width: 100%; height: 100%; object-fit: cover; filter: saturate(.7); transition: transform .3s; }
+  .g-card:hover .g-card__media img { transform: scale(1.03); }
+  .g-card__media::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 55%, rgba(8,10,9,.92)); }
+  .g-card__cat {
+    position: absolute; top: 18px; left: 18px; z-index: 2; padding: 7px 14px;
+    font-size: 15px; letter-spacing: .18em; color: var(--accent);
+    border: 1px solid rgba(127,227,180,.5); background: rgba(8,10,9,.55); border-radius: 2px;
+  }
+  .g-card__body { padding: 24px 24px 26px; display: grid; gap: 10px; align-content: start; }
+  .g-card__title { font-family: var(--font-display); font-size: 36px; font-weight: 600; letter-spacing: .04em; }
+  .g-card__meta { display: flex; gap: 16px; font-size: 19px; color: var(--faint); letter-spacing: .04em; font-variant-numeric: tabular-nums; }
+  .g-card__meta span { display: inline-flex; align-items: center; gap: 7px; }
+
+  .g-empty { grid-column: 1 / -1; padding: 120px 40px; display: grid; justify-items: center; gap: 20px; text-align: center; border: 1px dashed var(--line-strong); border-radius: var(--r-card); }
+  .g-empty h3 { margin: 0; font-family: var(--font-display); font-size: 38px; font-weight: 600; }
+  .g-empty p { margin: 0; font-size: 22px; line-height: 1.7; color: var(--faint); }
+
+  /* ---------- detail ---------- */
+
+  .g-detail { height: 100%; overflow-y: auto; overscroll-behavior: contain; }
+  .g-dhero { position: relative; height: 1000px; overflow: hidden; }
+  .g-dhero img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 28%; filter: saturate(.7) brightness(.9); }
+  .g-dhero__scrim { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(6,8,7,.72) 0%, rgba(6,8,7,.05) 26%, rgba(6,8,7,.44) 66%, rgba(8,10,9,.98) 100%); }
+  .g-dhero__top { position: absolute; top: 0; left: 0; right: 0; padding: 66px 84px; display: flex; justify-content: space-between; align-items: center; }
+  .g-dhero__top .icon-btn { border-radius: 2px; background: rgba(8,10,9,.5); }
+  .g-dhero__text { position: absolute; left: 84px; right: 84px; bottom: 64px; }
+  .g-dhero__cat { display: inline-flex; align-items: center; gap: 14px; font-size: 18px; letter-spacing: .26em; color: var(--accent); margin-bottom: 22px; }
+  .g-dhero__cat::before { content: ""; width: 40px; height: 2px; background: var(--accent); }
+  .g-dhero__text h1 { margin: 0; font-family: var(--font-display); font-size: 108px; font-weight: 600; line-height: 1.3; letter-spacing: .01em; }
+  .g-dhero__en { margin-top: 14px; font-size: 24px; letter-spacing: .24em; color: rgba(241,246,243,.6); }
+  .g-dbody { padding: 0 84px 300px; background: var(--bg); }
+  .g-stats { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 2px solid var(--accent); border-bottom: 1px solid var(--line); }
+  .g-stat { padding: 30px 0 28px; display: grid; gap: 8px; }
+  .g-stat + .g-stat { border-left: 1px solid var(--line); padding-left: 26px; }
+  .g-stat__label { font-size: 16px; letter-spacing: .22em; color: var(--faint); }
+  .g-stat__value { font-family: var(--font-num); font-size: 34px; color: var(--text); font-variant-numeric: tabular-nums; }
+  .g-block { margin-top: 48px; }
+  .g-block h2 { margin: 0 0 18px; font-size: 17px; letter-spacing: .3em; color: var(--accent); font-weight: 600; }
+  .g-block p { margin: 0; font-size: 28px; line-height: 1.8; color: var(--muted); max-width: 32ch; }
+  .g-note { margin-top: 18px; display: flex; align-items: center; gap: 12px; font-size: 20px; color: var(--faint); }
+
+  .g-exlist { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+  .g-exlist li { display: flex; align-items: center; gap: 24px; padding: 24px 0; border-bottom: 1px solid var(--line); }
+  .g-exlist__idx { width: 40px; font-family: var(--font-num); font-size: 18px; color: var(--faint); flex: none; }
+  .g-exlist__name { flex: 1 1 auto; font-size: 29px; letter-spacing: .04em; }
+  .g-exlist__sets { font-size: 20px; color: var(--muted); letter-spacing: .06em; font-variant-numeric: tabular-nums; }
+  .g-cta { position: absolute; left: 0; right: 0; bottom: 0; padding: 40px 84px 56px; display: flex; gap: 18px; background: linear-gradient(180deg, rgba(8,10,9,0), rgba(8,10,9,.96) 44%, #080a09); }
+
+  /* ---------- loading / error ---------- */
+
+  .g-loading { position: relative; height: 100%; display: grid; place-items: center; overflow: hidden; }
+  .g-loading img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: blur(30px) brightness(.32) grayscale(.4); transform: scale(1.1); }
+  .g-loading__veil { position: absolute; inset: 0; background: radial-gradient(70% 55% at 50% 50%, rgba(8,10,9,.55), rgba(5,7,6,.97)); }
+  .g-loading__inner { position: relative; display: grid; justify-items: center; gap: 30px; text-align: center; }
+  .g-loadbar { width: 420px; height: 2px; background: rgba(127,227,180,.18); overflow: hidden; }
+  .g-loadbar span { display: block; height: 100%; width: 40%; background: var(--accent); animation: loadSweep 1.2s cubic-bezier(.4,0,.2,1) infinite; }
+  @keyframes loadSweep { 0% { transform: translateX(-100%); } 100% { transform: translateX(350%); } }
+  .g-loading__title { font-family: var(--font-display); font-size: 42px; font-weight: 600; letter-spacing: .06em; }
+  .g-loading__sub { font-size: 20px; letter-spacing: .24em; color: var(--muted); }
+
+  /* ---------- training ---------- */
+
+  .g-train { position: relative; height: 100%; overflow: hidden; background: #060807; }
+  .g-train__media { position: absolute; inset: 0; }
+  .g-train__media img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; filter: grayscale(.45) brightness(.55) contrast(1.06); animation: gDrift 48s ease-in-out infinite alternate; }
+  @keyframes gDrift { from { transform: scale(1.03); } to { transform: scale(1.10) translateY(-1%); } }
+  .g-train__scrim {
+    position: absolute; inset: 0;
+    background:
+      linear-gradient(180deg, rgba(5,7,6,.92) 0%, rgba(5,7,6,.35) 20%, rgba(5,7,6,.10) 46%, rgba(5,7,6,.72) 72%, rgba(5,7,6,.98) 100%),
+      linear-gradient(90deg, rgba(5,7,6,.55), transparent 60%);
+  }
+  .g-train__grid {
+    position: absolute; inset: 0; opacity: .16; pointer-events: none;
+    background-image: linear-gradient(rgba(255,255,255,.14) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.14) 1px, transparent 1px);
+    background-size: 120px 120px;
+    mask-image: linear-gradient(180deg, transparent, #000 30%, #000 70%, transparent);
+  }
+  .g-train__tap { position: absolute; inset: 0; cursor: pointer; }
+
+  .g-ttop { position: relative; display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; padding: 64px 84px 0; }
+  .g-ttop__exit { display: inline-flex; align-items: center; gap: 14px; padding: 20px 16px; margin-left: -16px; border: 0; background: none; color: rgba(241,246,243,.84); font-size: 22px; letter-spacing: .12em; cursor: pointer; border-radius: 2px; }
+  .g-ttop__exit:hover { color: #fff; background: rgba(255,255,255,.06); }
+  .g-ttop__right { display: grid; gap: 10px; text-align: right; justify-items: end; }
+  .g-ttop__course { font-family: var(--font-display); font-size: 30px; font-weight: 600; letter-spacing: .08em; }
+  .g-ttop__set { display: inline-flex; align-items: center; gap: 10px; padding: 8px 16px; border: 1px solid var(--line-strong); border-radius: 2px; font-size: 18px; letter-spacing: .14em; color: var(--accent); font-variant-numeric: tabular-nums; }
+
+  .g-tcenter { position: absolute; left: 84px; right: 84px; top: 300px; display: grid; gap: 18px; }
+  .g-tcenter__kicker { display: inline-flex; align-items: center; gap: 14px; font-size: 18px; letter-spacing: .3em; color: var(--accent); }
+  .g-tcenter__kicker::before { content: ""; width: 12px; height: 12px; background: var(--accent); }
+  .g-exname { margin: 0; font-family: var(--font-display); font-size: 116px; font-weight: 600; line-height: 1.3; letter-spacing: .01em; }
+  .g-cue { margin: 0; font-size: 24px; letter-spacing: .06em; color: rgba(241,246,243,.62); max-width: 26ch; }
+
+  .g-timer { margin-top: 44px; display: flex; align-items: flex-end; gap: 26px; }
+  .g-timer__value {
+    font-family: var(--font-num); font-size: 240px; line-height: .86; font-weight: 600;
+    letter-spacing: -.015em; color: #f8fdfa; font-variant-numeric: tabular-nums;
+    text-shadow: 0 0 80px rgba(127,227,180,.18);
+  }
+  .g-timer__unit { font-size: 22px; letter-spacing: .3em; color: var(--muted); padding-bottom: 22px; }
+
+  .g-tbottom { position: absolute; left: 84px; right: 84px; bottom: 76px; display: grid; gap: 32px; }
+  .g-progress { display: grid; gap: 14px; }
+  .g-progress__meta { display: flex; justify-content: space-between; font-size: 18px; letter-spacing: .18em; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .g-progress .progress { height: 3px; background: rgba(255,255,255,.12); }
+  .g-next {
+    display: flex; align-items: center; gap: 24px; padding: 22px 26px;
+    border: 1px solid rgba(59,74,65,.8); background: rgba(8,12,10,.62); border-radius: 2px;
+  }
+  .g-next__thumb { display: block; width: 88px; height: 88px; border-radius: 2px; overflow: hidden; flex: none; }
+  .g-next__thumb img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(.3); }
+  .g-next__body { flex: 1 1 auto; display: grid; gap: 7px; }
+  .g-next__label { font-size: 15px; letter-spacing: .26em; color: var(--faint); }
+  .g-next__name { font-family: var(--font-display); font-size: 32px; font-weight: 600; letter-spacing: .05em; }
+  .g-next__set { font-size: 18px; color: var(--muted); letter-spacing: .06em; font-variant-numeric: tabular-nums; }
+  .g-controls { display: flex; align-items: center; gap: 18px; }
+  .g-ctrl {
+    height: 104px; border-radius: 2px; border: 1px solid var(--line-strong); background: rgba(10,14,12,.6);
+    color: var(--text); font-size: 24px; letter-spacing: .1em; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; gap: 14px;
+    transition: background-color .16s, border-color .16s, transform .16s;
+  }
+  .g-ctrl:hover { background: rgba(127,227,180,.10); border-color: var(--accent); }
+  .g-ctrl:active { transform: scale(.98); }
+  .g-ctrl:focus-visible { outline: none; box-shadow: 0 0 0 3px #060807, 0 0 0 6px var(--focus); }
+  .g-ctrl--icon { width: 104px; flex: none; }
+  .g-ctrl--main { flex: 1 1 auto; background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+  .g-ctrl--main:hover { background: #93eec4; border-color: #93eec4; }
+  .g-ctrl--skip { flex: 1 1 auto; }
+
+  /* rest stage */
+  .g-train.is-rest .g-train__media img { filter: grayscale(.7) brightness(.34) contrast(1.1); }
+  .g-rest { position: absolute; left: 84px; right: 84px; top: 240px; bottom: 84px; display: flex; flex-direction: column; justify-content: space-between; }
+  .g-rest__tag { display: inline-flex; align-items: center; gap: 14px; font-size: 18px; letter-spacing: .32em; color: var(--muted); }
+  .g-rest__tag::before { content: ""; width: 48px; height: 2px; background: var(--muted); }
+  .g-rest__title { margin: 20px 0 0; font-family: var(--font-display); font-size: 72px; font-weight: 600; line-height: 1.3; }
+  .g-rest__count { font-family: var(--font-num); font-size: 260px; line-height: .9; font-weight: 600; color: var(--accent); font-variant-numeric: tabular-nums; letter-spacing: -.02em; margin-top: 24px; }
+  .g-rest__count small { font-size: 26px; letter-spacing: .26em; color: var(--muted); margin-left: 20px; vertical-align: middle; font-family: var(--font-body); font-weight: 400; }
+  .g-rest__next { display: flex; align-items: center; gap: 26px; padding-top: 32px; border-top: 1px solid var(--line); }
+  .g-rest__next-thumb { display: block; width: 128px; height: 128px; border-radius: 2px; overflow: hidden; flex: none; }
+  .g-rest__next-thumb img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(.2); }
+  .g-rest__next-body { display: grid; gap: 8px; }
+  .g-rest__next-body span:first-child { font-size: 16px; letter-spacing: .26em; color: var(--faint); }
+  .g-rest__next-body b { font-family: var(--font-display); font-size: 44px; font-weight: 600; letter-spacing: .04em; }
+  .g-rest__next-body span:last-child { font-size: 19px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .g-rest__actions { display: flex; gap: 18px; margin-top: 34px; }
+  .g-rest__actions .btn { flex: 1 1 0; border-radius: 2px; min-height: 104px; }
+
+  .g-train.is-paused .g-train__media img { animation-play-state: paused; filter: grayscale(.6) brightness(.3); }
+  .g-train.is-paused .g-train__grid { opacity: .06; }
+
+  /* pause sheet */
+  .g-sheet { border-radius: 2px; border-color: var(--line-strong); }
+  .g-sheet .sheet__title { font-family: var(--font-display); font-weight: 600; font-size: 54px; }
+  .g-sheet__now { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 22px 26px; margin-bottom: 34px; border: 1px solid var(--line); background: rgba(127,227,180,.05); }
+  .g-sheet__now span:first-child { font-size: 16px; letter-spacing: .24em; color: var(--accent); }
+  .g-sheet__now span:last-child { font-family: var(--font-display); font-size: 30px; font-weight: 600; }
+  .g-sheet__row { display: flex; gap: 16px; }
+  .g-sheet__row .btn { border-radius: 2px; }
+  .g-sheet .btn { border-radius: 2px; }
+  .g-sheet .btn--quiet { color: var(--faint); }
+  .g-sheet .btn--quiet:hover { color: var(--text); }
+  .g-sheet .btn[disabled] { opacity: .34; cursor: not-allowed; }
+
+  /* ---------- shared system states ---------- */
+
+  .g-state { position: relative; height: 100%; display: grid; place-items: center; padding: 84px 96px; text-align: center; overflow: hidden; }
+  .g-state__bg { position: absolute; inset: 0; }
+  .g-state__bg img { width: 100%; height: 100%; object-fit: cover; filter: blur(26px) brightness(.24) grayscale(.5); transform: scale(1.07); }
+  .g-state__veil { position: absolute; inset: 0; background: radial-gradient(70% 55% at 50% 46%, rgba(8,12,10,.6), rgba(5,7,6,.97) 80%); }
+  .g-state__inner { position: relative; display: grid; justify-items: center; gap: 24px; max-width: 740px; }
+  .g-state__mark { width: 132px; height: 132px; border: 1px solid var(--line-strong); display: grid; place-items: center; color: var(--accent); margin-bottom: 8px; }
+  .g-state h1 { margin: 0; font-family: var(--font-display); font-size: 76px; font-weight: 600; line-height: 1.3; }
+  .g-state p { margin: 0; font-size: 25px; line-height: 1.8; color: var(--muted); max-width: 28ch; }
+  .g-state__actions { margin-top: 30px; display: flex; gap: 16px; width: 100%; max-width: 560px; }
+  .g-state__actions .btn { flex: 1 1 0; border-radius: 2px; }
+  .g-state__meta { margin-top: 8px; font-size: 17px; letter-spacing: .26em; color: var(--faint); }
+
+  /* ---------- complete ---------- */
+
+  .g-done { position: relative; height: 100%; overflow: hidden; display: flex; flex-direction: column; justify-content: center; padding: 0 96px; }
+  .g-done__bg { position: absolute; inset: 0; }
+  .g-done__bg img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(.5) brightness(.3); }
+  .g-done__veil { position: absolute; inset: 0; background: radial-gradient(80% 60% at 40% 40%, rgba(129,227,181,.10), transparent 60%), linear-gradient(180deg, rgba(6,8,7,.82), rgba(6,8,7,.96)); }
+  .g-done__inner { position: relative; display: grid; gap: 0; }
+  .g-done__kicker { display: inline-flex; align-items: center; gap: 14px; font-size: 18px; letter-spacing: .34em; color: var(--accent); }
+  .g-done__kicker::before { content: ""; width: 56px; height: 2px; background: var(--accent); }
+  .g-done h1 { margin: 24px 0 0; font-family: var(--font-display); font-size: 120px; font-weight: 600; line-height: 1.3; letter-spacing: .01em; }
+  .g-done__course { margin-top: 20px; font-size: 28px; letter-spacing: .16em; color: var(--muted); }
+  .g-done__stats { margin-top: 64px; display: grid; grid-template-columns: repeat(3, 1fr); border-top: 2px solid var(--accent); border-bottom: 1px solid var(--line); }
+  .g-done__stat { padding: 34px 0; display: grid; gap: 10px; }
+  .g-done__stat + .g-done__stat { border-left: 1px solid var(--line); padding-left: 34px; }
+  .g-done__stat b { font-family: var(--font-num); font-size: 54px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .g-done__stat span { font-size: 17px; letter-spacing: .2em; color: var(--faint); }
+  .g-done__actions { margin-top: 72px; display: flex; gap: 18px; }
+  .g-done__actions .btn { border-radius: 2px; min-height: 108px; }
+  .g-done__again { flex: 1.2 1 0; }
+  .g-done__home { flex: 1 1 0; }
+  .g-done__standby { align-self: flex-start; margin-top: 20px; color: var(--faint); padding-left: 0; }
+
+  /* focus */
+  .g-feature:focus-visible, .g-tile:focus-visible, .g-allrow:focus-visible,
+  .g-card:focus-visible, .g-section__more:focus-visible, .g-foot button:focus-visible,
+  .g-ttop__exit:focus-visible {
+    outline: none; box-shadow: 0 0 0 3px #060807, 0 0 0 6px var(--focus);
+  }
+</style>
+</head>
+<body data-scene="gym">
+<main class="mirror theme-gym" id="mirror">
+  <div id="app" aria-live="polite"></div>
+</main>
+
+<script src="assets/mirror.js"></script>
+<script>
+(function () {
+  'use strict';
+  var M = window.MIRRA;
+  var IC = M.icon;
+  var app = document.getElementById('app');
+  M.initScale();
+  M.kiosk();
+
+  var S = {
+    view: 'standby',
+    awake: false,
+    course: null,
+    filter: '全部',
+    segIndex: 0,
+    remaining: 0,
+    paused: false,
+    timer: null,
+    loadingTimer: null,
+    elapsed: 0,
+    exitOpen: false,
+    lastPainted: -1
+  };
+
+  var gymCourses = M.gymCourses;
+  var CATS = ['全部', '热身', '力量', '有氧', '拉伸'];
+
+  function lockup() {
+    return '<div class="g-lockup" aria-label="' + M.brands.gym.aria + '">' +
+      '<span class="g-lockup__mark" aria-hidden="true"><span></span></span>' +
+      '<span class="g-lockup__text">' +
+        '<span class="g-lockup__name">' + M.brands.gym.name + '</span>' +
+        '<span class="g-lockup__sub">' + M.brands.gym.sub + '</span>' +
+      '</span>' +
+    '</div>';
+  }
+
+  function greeting(d) {
+    var h = d.getHours();
+    if (h < 5) return '夜场';
+    if (h < 11) return '早训';
+    if (h < 14) return '午间';
+    if (h < 18) return '下午场';
+    return '晚训';
+  }
+
+  function courseById(id) {
+    for (var i = 0; i < gymCourses.length; i++) if (gymCourses[i].id === id) return gymCourses[i];
+    return null;
+  }
+
+  function clearTimer() { if (S.timer) { clearInterval(S.timer); S.timer = null; } }
+  function clearLoading() { if (S.loadingTimer) { clearTimeout(S.loadingTimer); S.loadingTimer = null; } }
+
+  function setView(v) { S.view = v; render(); }
+
+  function render() {
+    if (S.view !== 'training') clearTimer();
+    var html = '';
+    switch (S.view) {
+      case 'standby': html = standbyView(); break;
+      case 'home': html = homeView(); break;
+      case 'courses': html = coursesView(); break;
+      case 'detail': html = detailView(); break;
+      case 'loading': html = loadingView(); break;
+      case 'training': html = trainingView(); break;
+      case 'complete': html = completeView(); break;
+      case 'error': html = errorView(); break;
+      case 'offline': html = offlineView(); break;
+    }
+    app.innerHTML = html;
+    var screen = app.firstElementChild;
+    if (screen) screen.classList.add('screen-enter');
+    bindView(screen);
+    if (S.view === 'training') { renderOverlays(); startTimer(); }
+  }
+
+  /* ---------- standby ---------- */
+
+  function standbyView() {
+    var d = new Date();
+    return '<section class="g-standby" data-state="' + (S.awake ? 'awake' : 'dormant') + '" aria-label="镜面待机">' +
+      '<div class="g-standby__bg"><img src="assets/stock/gym_strength.jpg" alt="" aria-hidden="true"><div class="g-standby__scrim"></div></div>' +
+      '<div class="g-standby__inner">' +
+        '<div class="g-standby__top">' + lockup() +
+          '<span class="g-status"><i aria-hidden="true"></i>场馆开放中 · TREATMENT BAY 3</span>' +
+        '</div>' +
+        '<div class="g-standby__mid">' +
+          '<div class="g-clock">' + M.clockLabel(d) + '</div>' +
+          '<div class="g-date">' + M.dateLabel(d) + '</div>' +
+        '</div>' +
+        '<div class="g-standby__cta">' +
+          '<div class="g-standby__hint">' +
+            '<h1>准备好，<br>随时开练。</h1>' +
+            '<p>' + greeting(d) + '计划 · 力量基础 15 分钟</p>' +
+          '</div>' +
+          '<div style="display:grid;gap:22px;justify-items:end">' +
+            '<span class="g-standby__idle">' + IC('play', 18) + '轻触镜面开始</span>' +
+            '<button type="button" class="btn btn--primary btn--lg" data-act="enter" style="min-width:340px;border-radius:2px">开始训练</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+    '</section>';
+  }
+
+  /* ---------- home ---------- */
+
+  function homeView() {
+    var d = new Date();
+    var featured = gymCourses[1];
+    var featTotal = M.totalSeconds(featured);
+    var tiles = gymCourses.slice(0, 4).map(function (c, i) {
+      return '<button type="button" class="g-tile" data-course="' + c.id + '" aria-label="' + c.category + '，' + c.title + '，' + M.minuteLabel(M.totalSeconds(c)) + '">' +
+        '<img src="' + c.cover + '" alt="" aria-hidden="true">' +
+        '<span class="g-tile__scrim"></span>' +
+        '<span class="g-tile__body">' +
+          '<span class="g-tile__idx">' + (i + 1 < 10 ? '0' : '') + (i + 1) + '</span>' +
+          '<span class="g-tile__name">' + c.title + '</span>' +
+          '<span class="g-tile__meta od-nowrap">' + M.minuteLabel(M.totalSeconds(c)) + ' · ' + M.exerciseCount(c) + ' 个动作</span>' +
+        '</span>' +
+      '</button>';
+    }).join('');
+
+    return '<section class="g-screen" aria-label="健身房版首页">' +
+      '<div class="g-topbar">' + lockup() +
+        '<div class="g-topbar__right">' +
+          '<span class="g-topbar__time">' + M.clockLabel(d) + '</span>' +
+          '<button type="button" class="btn btn--quiet" data-act="standby">待机</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="g-hero-head">' +
+        '<p class="eyebrow">TODAY · ' + M.dateLabel(d) + '</p>' +
+        '<h1>' + greeting(d) + '，<em>练点什么</em>。</h1>' +
+      '</div>' +
+      '<button type="button" class="g-feature" data-course="' + featured.id + '" aria-label="今日推荐：' + featured.title + '，' + M.minuteLabel(featTotal) + '">' +
+        '<img src="' + featured.cover + '" alt="' + featured.alt + '">' +
+        '<span class="g-feature__scrim"></span>' +
+        '<span class="g-feature__body">' +
+          '<span>' +
+            '<span class="g-feature__tag">' + IC('play', 16) + '今日推荐</span>' +
+            '<span style="display:block;margin-top:24px">' +
+              '<span class="g-feature__title" style="display:block">' + featured.title + '</span>' +
+              '<span class="g-feature__meta"><span>' + M.minuteLabel(featTotal) + '</span><span>' + featured.level + '</span><span>' + M.exerciseCount(featured) + ' 个动作</span></span>' +
+            '</span>' +
+          '</span>' +
+          '<span class="g-feature__go">进入训练 ' + IC('chevron', 22) + '</span>' +
+        '</span>' +
+      '</button>' +
+      '<div class="g-section"><h2>训练分区</h2><span class="caption">共 ' + gymCourses.length + ' 节 · 按目标进入</span></div>' +
+      '<div class="g-tiles">' + tiles + '</div>' +
+      '<button type="button" class="g-allrow" data-act="courses">' +
+        '<span class="g-allrow__left"><span>全部课程</span><span>' + gymCourses.length + ' 节课程 · 按目标筛选</span></span>' +
+        '<span aria-hidden="true" style="color:var(--accent)">' + IC('chevron', 26) + '</span>' +
+      '</button>' +
+      (S.pending ? '<button type="button" class="g-pending" data-act="continue-pending">' +
+        '<span>' + IC('play', 22) + '</span>' +
+        '<span><b>继续未完成的训练</b><em>' + courseById(S.pending.courseId).title + ' · 已进行至第 ' + (S.pending.segIndex + 1) + ' 段</em></span>' +
+        IC('chevron', 24) +
+      '</button>' : '') +
+      '<div class="g-foot"><span>NORTHLINE ATHLETIC · 会员优先</span><button type="button" data-act="standby">返回待机</button></div>' +
+    '</section>';
+  }
+
+  /* ---------- list ---------- */
+
+  function coursesView() {
+    var list = gymCourses.filter(function (c) { return S.filter === '全部' || c.category === S.filter; });
+    var chips = CATS.map(function (cat) {
+      return '<button type="button" class="chip" data-filter="' + cat + '" aria-pressed="' + (S.filter === cat) + '">' + cat + '</button>';
+    }).join('');
+
+    var cards = list.map(function (c) {
+      return '<button type="button" class="g-card" data-course="' + c.id + '" aria-label="' + c.title + '，' + M.minuteLabel(M.totalSeconds(c)) + '，' + c.level + '">' +
+        '<span class="g-card__media"><img src="' + c.cover + '" alt="' + c.alt + '"><span class="g-card__cat">' + c.category + '</span></span>' +
+        '<span class="g-card__body">' +
+          '<span class="g-card__title">' + c.title + '</span>' +
+          '<span class="g-card__meta"><span>' + IC('clock', 18) + ' ' + M.minuteLabel(M.totalSeconds(c)) + '</span><span>' + c.level + '</span><span>' + M.exerciseCount(c) + ' 动作</span></span>' +
+        '</span>' +
+      '</button>';
+    }).join('');
+
+    var grid = list.length
+      ? '<div class="g-grid">' + cards + '</div>'
+      : '<div class="g-grid"><div class="g-empty">' +
+          '<span style="color:var(--faint)">' + IC('clock', 46) + '</span>' +
+          '<h3>该分区暂无课程</h3>' +
+          '<p>场馆课程按周更新，<br>可以查看其他训练分区。</p>' +
+          '<button type="button" class="btn btn--ghost" data-filter="全部" style="border-radius:2px;margin-top:16px">查看全部课程</button>' +
+        '</div></div>';
+
+    return '<section class="g-screen" aria-label="课程列表">' +
+      '<div class="g-topbar">' + lockup() +
+        '<div class="g-topbar__right"><button type="button" class="btn btn--quiet" data-act="home">返回首页</button></div>' +
+      '</div>' +
+      '<div class="g-listhead"><h1>全部课程</h1><span class="caption">' + list.length + ' / ' + gymCourses.length + '</span></div>' +
+      '<div class="g-filters" role="group" aria-label="按训练类型筛选">' + chips + '</div>' +
+      '<div style="flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain">' + grid + '</div>' +
+    '</section>';
+  }
+
+  /* ---------- detail ---------- */
+
+  function detailView() {
+    var c = S.course;
+    if (!c) return homeView();
+    var total = M.totalSeconds(c);
+    var blocks = c.blocks || [];
+    var items;
+    var totalSets;
+    if (blocks.length) {
+      items = blocks.map(function (b, i) {
+        return '<li>' +
+          '<span class="g-exlist__idx">' + (i + 1 < 10 ? '0' : '') + (i + 1) + '</span>' +
+          '<span class="g-exlist__name">' + b.name + '</span>' +
+          '<span class="g-exlist__sets">' + b.sets + ' 组 × ' + b.work + ' 秒</span>' +
+        '</li>';
+      }).join('');
+      totalSets = blocks.reduce(function (n, b) { return n + b.sets; }, 0);
+    } else {
+      items = (c.phases || []).map(function (p, i) {
+        return '<li>' +
+          '<span class="g-exlist__idx">' + (i + 1 < 10 ? '0' : '') + (i + 1) + '</span>' +
+          '<span class="g-exlist__name">' + p.name + '</span>' +
+          '<span class="g-exlist__sets">' + M.fmt(p.seconds) + '</span>' +
+        '</li>';
+      }).join('');
+      totalSets = (c.phases || []).length;
+    }
+    var itemCount = M.exerciseCount(c);
+
+    return '<section class="screen screen--flush" aria-label="' + c.title + '课程详情">' +
+      '<div class="g-detail">' +
+        '<div class="g-dhero">' +
+          '<img src="' + c.cover + '" alt="' + c.alt + '">' +
+          '<div class="g-dhero__scrim"></div>' +
+          '<div class="g-dhero__top">' +
+            '<button type="button" class="icon-btn" data-act="back-list" aria-label="返回课程列表">' + IC('back', 30) + '</button>' +
+            '<span class="caption" style="color:rgba(241,246,243,.6);letter-spacing:.24em">' + c.en + '</span>' +
+          '</div>' +
+          '<div class="g-dhero__text">' +
+            '<span class="g-dhero__cat">' + c.category + ' · ' + c.focus + '</span>' +
+            '<h1>' + c.title + '</h1>' +
+            '<p class="g-dhero__en">' + c.goal + '</p>' +
+          '</div>' +
+        '</div>' +
+        '<div class="g-dbody">' +
+          '<div class="g-stats">' +
+            '<div class="g-stat"><span class="g-stat__label">时长</span><span class="g-stat__value od-nowrap">' + M.minuteLabel(total) + '</span></div>' +
+            '<div class="g-stat"><span class="g-stat__label">难度</span><span class="g-stat__value">' + c.level + '</span></div>' +
+            '<div class="g-stat"><span class="g-stat__label">' + (blocks.length ? '动作' : '阶段') + '</span><span class="g-stat__value">' + itemCount + '</span></div>' +
+            '<div class="g-stat"><span class="g-stat__label">' + (blocks.length ? '总组数' : '总段数') + '</span><span class="g-stat__value">' + totalSets + '</span></div>' +
+          '</div>' +
+          '<div class="g-block"><h2>训练目标</h2><p>' + c.intro + '</p>' +
+            '<div class="g-note">' + IC('check', 20) + '<span>' + c.note + '</span></div>' +
+          '</div>' +
+          '<div class="g-block"><h2>动作结构</h2><ul class="g-exlist">' + items + '</ul></div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="g-cta"><button type="button" class="btn btn--primary btn--lg btn--block" data-act="start" style="border-radius:2px">开始训练 · ' + M.minuteLabel(total) + '</button></div>' +
+    '</section>';
+  }
+
+  /* ---------- loading ---------- */
+
+  function loadingView() {
+    var c = S.course;
+    return '<section class="g-loading" aria-label="正在加载训练">' +
+      '<img src="' + c.cover + '" alt="" aria-hidden="true">' +
+      '<div class="g-loading__veil"></div>' +
+      '<div class="g-loading__inner">' +
+        '<div class="g-loadbar"><span></span></div>' +
+        '<p class="g-loading__title">' + c.title + '</p>' +
+        '<p class="g-loading__sub">LOADING SESSION · 正在准备动作提示</p>' +
+      '</div>' +
+    '</section>';
+  }
+
+  /* ---------- training ---------- */
+
+  function segments() { return M.segmentsFor(S.course); }
+  function currentSeg() { var segs = segments(); return segs[Math.min(S.segIndex, segs.length - 1)]; }
+
+  function nextWork(offset) {
+    var segs = segments();
+    var start = S.segIndex + (offset || 0);
+    for (var i = start; i < segs.length; i++) {
+      if (segs[i].kind === 'work') return { seg: segs[i], index: i };
+    }
+    return null;
+  }
+
+  function setLabel(seg) {
+    if (seg.kind === 'rest') return '组间休息';
+    if (seg.sets > 0) return '第 ' + seg.set + ' / ' + seg.sets + ' 组';
+    return '第 ' + (seg.phaseIndex + 1) + ' / ' + seg.phaseCount + ' 阶段';
+  }
+
+  function trainingView() {
+    var c = S.course;
+    var seg = currentSeg();
+    var total = M.totalSeconds(c);
+    var isRest = seg.kind === 'rest';
+
+    var topBar = '<div class="g-ttop">' +
+      '<button type="button" class="g-ttop__exit" data-act="exit">' + IC('back', 24) + '退出</button>' +
+      '<div class="g-ttop__right">' +
+        '<span class="g-ttop__course">' + c.title + '</span>' +
+        '<span class="g-ttop__set" id="tSet">' + setLabel(seg) + '</span>' +
+      '</div>' +
+    '</div>';
+
+    var body;
+    if (isRest) {
+      var nw = nextWork(1);
+      var nextName = nw ? nw.seg.name : '结束';
+      var nextSet = nw ? setLabel(nw.seg) + ' · ' + nw.seg.seconds + ' 秒' : '完成训练';
+      body = '<div class="g-rest">' +
+        '<div>' +
+          '<span class="g-rest__tag">REST · 组间休息</span>' +
+          '<h1 class="g-rest__title">调整呼吸，<br>准备下一组。</h1>' +
+          '<div class="g-rest__count"><span id="tRemain">' + M.fmt(Math.ceil(S.remaining)) + '</span><small>剩余</small></div>' +
+        '</div>' +
+        '<div>' +
+          '<div class="g-rest__next">' +
+            '<span class="g-rest__next-thumb"><img src="' + c.cover + '" alt="" aria-hidden="true"></span>' +
+            '<span class="g-rest__next-body"><span>下一动作</span><b>' + nextName + '</b><span>' + nextSet + '</span></span>' +
+          '</div>' +
+          '<div class="g-rest__actions">' +
+            '<button type="button" class="btn btn--primary" data-act="skip-rest">跳过休息 ' + IC('next', 22) + '</button>' +
+            '<button type="button" class="btn btn--ghost" data-act="exit">结束训练</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    } else {
+      var next = nextWork(1);
+      var nextSeg = next ? next.seg : null;
+      var nextLabel = nextSeg
+        ? (nextSeg.kind === 'rest' ? '组间休息' : nextSeg.name)
+        : '完成训练';
+      var nextMeta = nextSeg
+        ? (nextSeg.kind === 'rest' ? nextSeg.seconds + ' 秒 · 之后进入下一组' : setLabel(nextSeg) + ' · ' + nextSeg.seconds + ' 秒')
+        : '即将完成本节课程';
+      body = '<div class="g-tcenter">' +
+          '<span class="g-tcenter__kicker">' + (seg.kind === 'work' ? 'CURRENT · 当前动作' : '') + '</span>' +
+          '<h1 class="g-exname" id="tName">' + seg.name + '</h1>' +
+          '<p class="g-cue" id="tCue">' + (seg.note || '') + '</p>' +
+          '<div class="g-timer"><span class="g-timer__value" id="tRemain">' + M.fmt(Math.ceil(S.remaining)) + '</span><span class="g-timer__unit">剩余</span></div>' +
+        '</div>' +
+        '<div class="g-tbottom">' +
+          '<div class="g-progress">' +
+            '<div class="progress"><span class="progress-fill" id="tFill"></span></div>' +
+            '<div class="g-progress__meta"><span id="tElapsed">已训练 ' + M.fmt(Math.floor(S.elapsed)) + '</span><span id="tTotal">共 ' + M.fmt(total) + '</span></div>' +
+          '</div>' +
+          '<div class="g-next">' +
+            '<span class="g-next__thumb"><img src="' + c.cover + '" alt="" aria-hidden="true"></span>' +
+            '<span class="g-next__body"><span class="g-next__label">下一动作</span><span class="g-next__name" id="tNextName">' + nextLabel + '</span><span class="g-next__set" id="tNextMeta">' + nextMeta + '</span></span>' +
+          '</div>' +
+          '<div class="g-controls">' +
+            '<button type="button" class="g-ctrl g-ctrl--icon" data-act="pause" aria-label="暂停训练">' + IC('pause', 34) + '</button>' +
+            '<button type="button" class="g-ctrl g-ctrl--main" data-act="pause">暂停训练</button>' +
+            '<button type="button" class="g-ctrl g-ctrl--icon" data-act="skip" aria-label="跳到下一动作">' + IC('next', 34) + '</button>' +
+          '</div>' +
+        '</div>';
+    }
+
+    return '<section class="g-train' + (isRest ? ' is-rest' : '') + '" id="stage" aria-label="沉浸式训练">' +
+      '<div class="g-train__media"><img src="' + c.cover + '" alt="教练演示：' + seg.name + '"></div>' +
+      '<div class="g-train__scrim"></div>' +
+      '<div class="g-train__grid"></div>' +
+      '<div class="g-train__tap" data-act="pause" role="button" tabindex="-1" aria-label="显示训练控制"></div>' +
+      topBar +
+      body +
+    '</section>';
+  }
+
+  function renderOverlays() {
+    var host = document.getElementById('stage');
+    if (!host) return;
+    var old = host.querySelector('.overlay');
+    if (old) old.remove();
+
+    if (S.exitOpen) {
+      var c = S.course;
+      var wrap = document.createElement('div');
+      wrap.className = 'overlay';
+      wrap.setAttribute('role', 'dialog');
+      wrap.setAttribute('aria-modal', 'true');
+      wrap.setAttribute('aria-label', '结束本次训练');
+      wrap.innerHTML = '<div class="sheet g-sheet">' +
+        '<p class="eyebrow" style="margin-bottom:16px">END SESSION</p>' +
+        '<h2 class="sheet__title">结束本次训练？</h2>' +
+        '<p class="sheet__text">「' + c.title + '」的当前进度不会保留。本次已完成的组次只在课程结束后记录。</p>' +
+        '<div class="sheet__actions">' +
+          '<button type="button" class="btn btn--primary btn--lg" data-act="keep-going">继续训练</button>' +
+          '<button type="button" class="btn btn--ghost" data-act="confirm-exit">结束并返回首页</button>' +
+        '</div>' +
+      '</div>';
+      host.appendChild(wrap);
+      var keep = wrap.querySelector('[data-act="keep-going"]');
+      if (keep) keep.focus();
+      return;
+    }
+
+    if (S.paused) {
+      var seg = currentSeg();
+      var isFirst = S.segIndex <= 0;
+      var isLast = S.segIndex >= segments().length - 1;
+      var nowLabel = seg.kind === 'rest' ? '组间休息' : seg.name + ' · ' + setLabel(seg).replace('第 ', '');
+      var wrap2 = document.createElement('div');
+      wrap2.className = 'overlay';
+      wrap2.setAttribute('role', 'dialog');
+      wrap2.setAttribute('aria-modal', 'true');
+      wrap2.setAttribute('aria-label', '训练已暂停');
+      wrap2.innerHTML = '<div class="sheet g-sheet">' +
+        '<p class="eyebrow" style="margin-bottom:16px">PAUSED</p>' +
+        '<h2 class="sheet__title">训练已暂停</h2>' +
+        '<div class="g-sheet__now"><span>当前</span><span>' + nowLabel + '</span></div>' +
+        '<div class="sheet__actions">' +
+          '<button type="button" class="btn btn--primary btn--lg" data-act="resume">继续训练</button>' +
+          '<div class="g-sheet__row">' +
+            '<button type="button" class="btn btn--ghost od-fill" data-act="prev"' + (isFirst ? ' disabled aria-disabled="true" tabindex="-1"' : '') + '>' + IC('prev', 22) + '上一个</button>' +
+            '<button type="button" class="btn btn--ghost od-fill" data-act="skip">' + (isLast ? '完成' : '下一个') + IC('next', 22) + '</button>' +
+          '</div>' +
+          '<button type="button" class="btn btn--quiet" data-act="exit">退出课程</button>' +
+        '</div>' +
+      '</div>';
+      host.appendChild(wrap2);
+      var resume = wrap2.querySelector('[data-act="resume"]');
+      if (resume) resume.focus();
+    }
+  }
+
+  function startTimer() { clearTimer(); S.timer = setInterval(tick, 250); }
+
+  function tick() {
+    if (S.paused || S.view !== 'training') return;
+    var wasRest = currentSeg().kind === 'rest';
+    S.remaining = Math.max(0, S.remaining - 0.25);
+    S.elapsed = Math.min(M.totalSeconds(S.course), S.elapsed + 0.25);
+    paintTraining();
+    if (S.remaining <= 0.01) advance();
+  }
+
+  function paintTraining() {
+    var seg = currentSeg();
+    var total = M.totalSeconds(S.course);
+    var remainEl = document.getElementById('tRemain');
+    if (!remainEl) return;
+    remainEl.textContent = M.fmt(Math.ceil(S.remaining));
+    var setEl = document.getElementById('tSet');
+    if (setEl) setEl.textContent = setLabel(seg);
+    var fill = document.getElementById('tFill');
+    if (fill) fill.style.width = Math.min(100, (S.elapsed / total) * 100).toFixed(2) + '%';
+    var elapsedEl = document.getElementById('tElapsed');
+    if (elapsedEl) elapsedEl.textContent = '已训练 ' + M.fmt(Math.floor(S.elapsed));
+  }
+
+  function advance() {
+    var segs = segments();
+    if (S.segIndex + 1 >= segs.length) { finish(); return; }
+    S.segIndex += 1;
+    S.remaining = segs[S.segIndex].seconds;
+    render();
+  }
+
+  function jump(i) {
+    var segs = segments();
+    S.segIndex = Math.max(0, Math.min(i, segs.length - 1));
+    S.remaining = segs[S.segIndex].seconds;
+    S.paused = false;
+    render();
+  }
+
+  function skipCurrent() {
+    var segs = segments();
+    if (S.segIndex >= segs.length - 1) { finish(); return; }
+    jump(S.segIndex + 1);
+  }
+
+  function finish() {
+    clearTimer();
+    S.paused = false;
+    S.exitOpen = false;
+    S.view = 'complete';
+    render();
+  }
+
+  /* ---------- system states ---------- */
+
+  function stateShell(inner) {
+    var c = S.course || gymCourses[1];
+    return '<section class="g-state" aria-label="系统状态">' +
+      '<div class="g-state__bg"><img src="' + c.cover + '" alt="" aria-hidden="true"></div>' +
+      '<div class="g-state__veil"></div>' +
+      '<div class="g-state__inner">' + inner + '</div>' +
+    '</section>';
+  }
+
+  function errorView() {
+    return stateShell(
+      '<span class="g-state__mark">' + IC('refresh', 54) + '</span>' +
+      '<h1>视频画面<br>中断</h1>' +
+      '<p>动作提示仍然可用，画面正在恢复。<br>重新载入后会回到当前组次。</p>' +
+      '<div class="g-state__actions">' +
+        '<button type="button" class="btn btn--primary btn--lg" data-act="retry">重新载入</button>' +
+        '<button type="button" class="btn btn--ghost btn--lg" data-act="back-detail">返回课程详情</button>' +
+      '</div>' +
+      '<span class="g-state__meta">ERR · VIDEO STREAM / REF 04</span>'
+    );
+  }
+
+  function offlineView() {
+    return stateShell(
+      '<span class="g-state__mark">' + IC('wifiOff', 54) + '</span>' +
+      '<h1>网络未连接</h1>' +
+      '<p>镜面未接入场馆网络，课程与训练记录<br>暂时无法同步。恢复后可直接继续。</p>' +
+      '<div class="g-state__actions">' +
+        '<button type="button" class="btn btn--primary btn--lg" data-act="reconnect">重新连接</button>' +
+        '<button type="button" class="btn btn--ghost btn--lg" data-act="standby">返回待机</button>' +
+      '</div>' +
+      '<span class="g-state__meta">ERR · CONNECTION / REF 05</span>'
+    );
+  }
+
+  /* ---------- complete ---------- */
+
+  function completeView() {
+    var c = S.course;
+    var total = M.totalSeconds(c);
+    var blocks = c.blocks || [];
+    var sets = blocks.length
+      ? blocks.reduce(function (n, b) { return n + b.sets; }, 0)
+      : (c.phases || []).length;
+    var count = M.exerciseCount(c);
+    var countLabel = blocks.length ? '完成动作' : '完成阶段';
+    var setLabel = blocks.length ? '完成组数' : '完成段数';
+    return '<section class="g-done" aria-label="训练完成">' +
+      '<div class="g-done__bg"><img src="' + c.cover + '" alt="" aria-hidden="true"></div>' +
+      '<div class="g-done__veil"></div>' +
+      '<div class="g-done__inner">' +
+        '<span class="g-done__kicker">SESSION COMPLETE</span>' +
+        '<h1>训练<br>完成</h1>' +
+        '<p class="g-done__course">' + c.title + ' · ' + c.en + '</p>' +
+        '<div class="g-done__stats">' +
+          '<div class="g-done__stat"><b class="od-nowrap">' + M.minuteLabel(total) + '</b><span>课程时长</span></div>' +
+          '<div class="g-done__stat"><b>' + count + '</b><span>' + countLabel + '</span></div>' +
+          '<div class="g-done__stat"><b>' + sets + '</b><span>' + setLabel + '</span></div>' +
+        '</div>' +
+        '<div class="g-done__actions">' +
+          '<button type="button" class="btn btn--primary btn--lg g-done__again" data-act="again">再练一次</button>' +
+          '<button type="button" class="btn btn--ghost btn--lg g-done__home" data-act="home">返回首页</button>' +
+        '</div>' +
+        '<button type="button" class="btn btn--quiet g-done__standby" data-act="standby">返回镜面待机</button>' +
+      '</div>' +
+    '</section>';
+  }
+
+  /* ---------- bind ---------- */
+
+  function beginCourse(id) {
+    var c = courseById(id);
+    if (!c) return;
+    clearTimer(); clearLoading();
+    S.course = c;
+    S.segIndex = 0;
+    S.remaining = 0;
+    S.elapsed = 0;
+    S.paused = false;
+    S.exitOpen = false;
+    S.pending = null;
+    S.view = 'loading';
+    render();
+    S.loadingTimer = setTimeout(function () {
+      S.loadingTimer = null;
+      var segs = M.segmentsFor(c);
+      S.segIndex = 0;
+      S.remaining = segs[0].seconds;
+      S.view = 'training';
+      render();
+    }, 1400);
+  }
+
+  function openCourse(id) {
+    var c = courseById(id);
+    if (!c) return;
+    S.course = c;
+    setView('detail');
+  }
+
+  function bindView(screen) {
+    if (!screen) return;
+
+    if (S.view === 'standby') {
+      screen.addEventListener('click', function (e) {
+        if (e.target.closest('a')) return;
+        if (!S.awake) { S.awake = true; render(); return; }
+        if (e.target.closest('[data-act="enter"]')) setView('home');
+      });
+      screen.addEventListener('keydown', function (e) {
+        if ((e.key === 'Enter' || e.key === ' ') && !S.awake) { e.preventDefault(); S.awake = true; render(); }
+      });
+      screen.tabIndex = 0;
+      return;
+    }
+
+    screen.addEventListener('click', function (e) {
+      var el = e.target.closest('[data-act], [data-course], [data-filter]');
+      if (!el) return;
+
+      if (el.dataset.course) { openCourse(el.dataset.course); return; }
+      if (el.dataset.filter) { S.filter = el.dataset.filter; render(); return; }
+
+      switch (el.dataset.act) {
+        case 'enter': setView('home'); break;
+        case 'home': clearTimer(); S.awake = true; setView('home'); break;
+        case 'standby': clearTimer(); clearLoading(); S.paused = false; S.exitOpen = false; S.awake = false; S.view = 'standby'; render(); break;
+        case 'courses': S.filter = '全部'; setView('courses'); break;
+        case 'back-list': setView('courses'); break;
+        case 'start': beginCourse(S.course.id); break;
+        case 'again': beginCourse(S.course.id); break;
+        case 'pause':
+          if (S.paused) return;
+          S.paused = true;
+          var st = document.getElementById('stage');
+          if (st) st.classList.add('is-paused');
+          renderOverlays();
+          break;
+        case 'resume':
+          S.paused = false;
+          var st2 = document.getElementById('stage');
+          if (st2) st2.classList.remove('is-paused');
+          renderOverlays();
+          break;
+        case 'prev': if (S.segIndex > 0) jump(S.segIndex - 1); break;
+        case 'skip': skipCurrent(); break;
+        case 'skip-rest': skipCurrent(); break;
+        case 'exit': S.exitOpen = true; S.paused = true; renderOverlays(); break;
+        case 'keep-going': S.exitOpen = false; S.paused = false; renderOverlays(); break;
+        case 'confirm-exit':
+          clearTimer();
+          S.exitOpen = false; S.paused = false;
+          S.pending = { courseId: S.course.id, segIndex: S.segIndex };
+          S.view = 'home'; render();
+          break;
+        case 'continue-pending':
+          S.course = courseById(S.pending.courseId);
+          S.segIndex = Math.min(S.pending.segIndex, segments().length - 1);
+          S.remaining = segments()[S.segIndex].seconds;
+          S.elapsed = 0;
+          S.paused = false;
+          S.pending = null;
+          S.view = 'training'; render();
+          break;
+        case 'retry':
+          S.paused = false;
+          S.view = 'training';
+          if (!S.remaining) S.remaining = segments()[S.segIndex].seconds;
+          render();
+          break;
+        case 'reconnect': setView('home'); break;
+        case 'back-detail': setView('detail'); break;
+      }
+    });
+  }
+
+  function bootFromHash() {
+    var h = (location.hash || '').replace('#', '');
+    S.course = gymCourses[1];
+    if (h === 'error') S.view = 'error';
+    else if (h === 'offline') S.view = 'offline';
+    else if (h === 'training') {
+      S.view = 'training';
+      S.segIndex = 0;
+      S.remaining = M.segmentsFor(S.course)[0].seconds;
+    }
+  }
+
+  bootFromHash();
+  render();
+})();
+</script>
+</body>
+</html>
