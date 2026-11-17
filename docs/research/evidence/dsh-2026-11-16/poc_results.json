@@ -1,0 +1,30 @@
+{
+  "ex_0006_lite": {
+    "video": "ex_0006.mp4", "tier": "lite", "fps": 30.0, "frames": 4874,
+    "det_rate": 0.989, "p50": 15.13, "p95": 47.82,
+    "knee_deg_p50": 173.4, "knee_in_physio_range_pct": 62.3,
+    "reps_naive_lo100_hi150": 50, "reps_robust_lo100_hi150": 20,
+    "reps_robust_lo110_hi160": 24
+  },
+  "ex_0006_full": {
+    "video": "ex_0006.mp4", "tier": "full", "fps": 30.0, "frames": 4874,
+    "det_rate": 0.989, "p50": 25.41, "p95": 74.86,
+    "knee_deg_p50": 172.5, "knee_in_physio_range_pct": 62.8,
+    "reps_naive_lo100_hi150": 28, "reps_robust_lo100_hi150": 10,
+    "reps_robust_lo110_hi160": 14
+  },
+  "ex_0009_lite": {
+    "video": "ex_0009.mp4", "tier": "lite", "fps": 30.0, "frames": 4700,
+    "det_rate": 1.0, "p50": 14.94, "p95": 37.38,
+    "knee_deg_p50": 171.3, "knee_in_physio_range_pct": 61.7,
+    "reps_naive_lo100_hi150": 60, "reps_robust_lo100_hi150": 47,
+    "reps_robust_lo110_hi160": 52
+  },
+  "ex_0010_lite": {
+    "video": "ex_0010.mp4", "tier": "lite", "fps": 30.0, "frames": 4775,
+    "det_rate": 0.978, "p50": 13.77, "p95": 31.75,
+    "knee_deg_p50": 173.9, "knee_in_physio_range_pct": 55.4,
+    "reps_naive_lo100_hi150": 27, "reps_robust_lo100_hi150": 11,
+    "reps_robust_lo110_hi160": 11
+  }
+}
