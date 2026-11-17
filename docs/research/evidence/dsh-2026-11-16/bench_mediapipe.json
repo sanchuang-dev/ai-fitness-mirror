@@ -1,0 +1,26 @@
+{
+  "image_size": [667, 1000],
+  "results": {
+    "mediapipe_lite_image_cpu": {
+      "p50": 19.95, "p95": 27.87, "mean": 21.11,
+      "n": 60, "n_keypoints": 33, "weight_MB": 5.78
+    },
+    "mediapipe_full_image_cpu": {
+      "p50": 25.84, "p95": 66.82, "mean": 37.45,
+      "n": 60, "n_keypoints": 33, "weight_MB": 9.4
+    },
+    "mediapipe_heavy_image_cpu": {
+      "p50": 75.73, "p95": 164.35, "mean": 95.55,
+      "n": 60, "n_keypoints": 33, "weight_MB": 30.66
+    },
+    "mediapipe_lite_video_clip": {
+      "frames": 81, "detected": 67, "detection_rate": 0.827,
+      "p50": 9.45, "p95": 19.37, "fps": 105.8, "reps": 4
+    },
+    "mediapipe_full_video_clip": {
+      "frames": 81, "detected": 65, "detection_rate": 0.802,
+      "p50": 16.66, "p95": 25.86, "fps": 60.0, "reps": 2
+    }
+  },
+  "peak_rss_MB": 266.2
+}
