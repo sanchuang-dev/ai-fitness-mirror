@@ -20,6 +20,14 @@
 - 公开可访问的原型仅用于功能与视觉沟通，不代表真机/Android WebView 验收。
 - `prototype/` 保留交付的 HTML、CSS、JS、图片，不主动改写外观或行为。
 
+## 技术研究资料
+
+AI 姿态识别与动作评价目前处于**技术尽调与专项 POC 规划阶段**，不代表原型已经接通摄像头或 AI 能力。
+
+- [综合技术尽调与研发决策报告](docs/research/ai-fitness-mirror-technical-due-diligence-v1.0.md)
+- [给管理层看的研发说明](docs/research/management-brief-v1.0.md)
+- [研究资料索引与 DSH 原始测评证据](docs/research/README.md)
+
 ## 来源与发布
 
 - 上传原型文件：`智能健身镜原型设计.zip`
